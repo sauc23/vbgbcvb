@@ -23,7 +23,7 @@
   <script>
     function updateData() {
       // Fetch data from your own API endpoint that retrieves NTS data
-      fetch('/api')
+      fetch('https://www.nts.live/api/v2/live')
         .then(response => response.json())
         .then(data => {
           // Extract information for Stream One

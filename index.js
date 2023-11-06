@@ -1,4 +1,5 @@
 const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -7,22 +8,24 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// Emulate audio streaming for /stream and /stream2
-app.get('/stream', (req, res) => {
-  res.redirect('https://stream-relay-geo.ntslive.net/stream');
-});
+// Emulate audio streaming for /stream and /stream2 using an HTTP proxy
+app.use('/stream', createProxyMiddleware({
+  target: 'https://stream-relay-geo.ntslive.net',
+  changeOrigin: true,
+  pathRewrite: { '^/stream': '/stream' },
+}));
 
-app.get('/stream2', (req, res) => {
-  res.redirect('https://stream-relay-geo.ntslive.net/stream2');
-});
+app.use('/stream2', createProxyMiddleware({
+  target: 'https://stream-relay-geo.ntslive.net',
+  changeOrigin: true,
+  pathRewrite: { '^/stream2': '/stream2' },
+}));
 
 // Add an API route to fetch data from nts.live/api/v2/live
 app.get('/api', (req, res) => {
-  // You can use Express's built-in JSON method to make the API request.
-
   const https = require('https');
   const options = {
-    host: 'nts.live',
+    host: 'https://nts.live',
     path: '/api/v2/live',
   };
 
@@ -36,7 +39,7 @@ app.get('/api', (req, res) => {
     response.on('end', () => {
       try {
         const apiData = JSON.parse(data);
-        res.json(apiData);
+        res.json(apiData.results[0]);
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch NTS data' });

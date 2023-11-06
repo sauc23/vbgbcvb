@@ -1,47 +1,64 @@
 <!DOCTYPE html>
 <html>
-<title>Vercel Bare Server</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<head>
+  <title>Stream One and Stream Two</title>
+</head>
 <body>
+  <h1>Stream One</h1>
+  <p id="broadcastTitle1">NTS: Loading...</p>
+  <p id="broadcastTime1">TIME: Loading...</p>
+  <audio id="audioPlayer1" controls autoplay>
+    <source src="/stream" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
 
+  <h1>Stream Two</h1>
+  <p id="broadcastTitle2">NTS: Loading...</p>
+  <p id="broadcastTime2">TIME: Loading...</p>
+  <audio id="audioPlayer2" controls autoplay>
+    <source src="/stream2" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
 
-<div class="w3-container">
-<h1>Hello World</h1>
-<h2>Congrats, You Just Lauched an Up to Date Bare Server Using Vercel</h2>
-<br>
-<br>
-<br>
-<center>
-    <p id="versions">Current Versions: </p>
-</center>
-    <script>
-        // Define the URL to fetch the JSON data from
-        const url = '/bare/';
+  <script>
+    function updateData() {
+      // Fetch data from your own API endpoint that retrieves NTS data
+      fetch('/api')
+        .then(response => response.json())
+        .then(data => {
+          // Extract information for Stream One
+          const streamOneInfo = data.results[0].now;
+          const broadcastTitle1 = streamOneInfo.broadcast_title;
+          const startTime1 = new Date(streamOneInfo.start_timestamp).toLocaleString();
+          const endTime1 = new Date(streamOneInfo.end_timestamp).toLocaleString();
 
-        // Fetch the JSON data from the URL
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                // Access the "versions" array from the JSON data
-                const versions = data.versions;
+          // Display information for Stream One
+          document.getElementById('broadcastTitle1').textContent = `NTS: ${broadcastTitle1}`;
+          document.getElementById('broadcastTime1').textContent = `TIME: ${startTime1} - ${endTime1}`;
 
-                // Create a new array with the versions converted to uppercase
-                const versionsUppercase = versions.map(version => version.toUpperCase());
+          // Extract information for Stream Two
+          const streamTwoInfo = data.results[1].now;
+          const broadcastTitle2 = streamTwoInfo.broadcast_title;
+          const startTime2 = new Date(streamTwoInfo.start_timestamp).toLocaleString();
+          const endTime2 = new Date(streamTwoInfo.end_timestamp).toLocaleString();
 
-                // Create a comma-separated string of the versions
-                const versionsString = versionsUppercase.join(', ');
+          // Display information for Stream Two
+          document.getElementById('broadcastTitle2').textContent = `NTS: ${broadcastTitle2}`;
+          document.getElementById('broadcastTime2').textContent = `TIME: ${startTime2} - ${endTime2}`;
+        })
+        .catch(error => {
+          console.error(error);
+          document.getElementById('broadcastTitle1').textContent = 'NTS: Error fetching data';
+          document.getElementById('broadcastTime1').textContent = 'TIME: Error fetching data';
+          document.getElementById('broadcastTitle2').textContent = 'NTS: Error fetching data';
+          document.getElementById('broadcastTime2').textContent = 'TIME: Error fetching data';
+        });
+    }
 
-                // Update the <p> element with the versions
-                const versionsElement = document.getElementById('versions');
-                versionsElement.textContent += versionsString;
-            })
-            .catch(error => {
-                console.error('Error fetching data:', error);
-            });
-    </script>
-</div>
-
-
+    // Call updateData every second
+    setInterval(updateData, 1000);
+    // Initially, call updateData to get the latest data immediately
+    updateData();
+  </script>
 </body>
-</html> 
+</html>

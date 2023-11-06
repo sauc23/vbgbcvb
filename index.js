@@ -1,46 +1,41 @@
-const http = require("node:http");
-const { createBareServer } = require("@tomphttp/bare-server-node");
-const fs = require("fs");
-const path = require("path");
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
 
-// Create an HTTP server
-const httpServer = http.createServer();
-const bareServer = createBareServer("/bare/");
+// Serve the index.html file at the root URL "/"
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
 
-httpServer.on("request", (req, res) => {
-  if (bareServer.shouldRoute(req)) {
-    bareServer.routeRequest(req, res);
-  } else if (req.url === "/") {
-    // Serve the index.html file when the root URL is requested
-    const indexPath = path.join(__dirname, "index.html");
+// Emulate audio streaming for /stream and /stream2
+app.get('/stream', (req, res) => {
+  res.redirect('https://stream-relay-geo.ntslive.net/stream');
+});
 
-    fs.readFile(indexPath, "utf8", (err, data) => {
-      if (err) {
-        res.writeHead(500, { "Content-Type": "text/plain" });
-        res.end("Internal Server Error");
-      } else {
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.end(data);
-      }
+app.get('/stream2', (req, res) => {
+  res.redirect('https://stream-relay-geo.ntslive.net/stream2');
+});
+
+// ...
+
+// Add an API route to fetch data from nts.live/api/v2/live
+app.get('/api', (req, res) => {
+  // You can use a library like axios or node-fetch to make the API request.
+  // Here, we'll use node-fetch as an example.
+
+  const fetch = require('node-fetch');
+
+  fetch('https://nts.live/api/v2/live')
+    .then(response => response.json())
+    .then(data => {
+      res.json(data);
+    })
+    .catch(error => {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to fetch NTS data' });
     });
-  } else {
-    res.writeHead(400, { "Content-Type": "text/plain" });
-    res.end("Not found.");
-  }
 });
 
-httpServer.on("upgrade", (req, socket, head) => {
-  if (bareServer.shouldRoute(req)) {
-    bareServer.routeUpgrade(req, socket, head);
-  } else {
-    socket.end();
-  }
-});
-
-httpServer.on("listening", () => {
-  console.log("HTTP server listening");
-});
-
-httpServer.listen({
-  port: 8000,
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
